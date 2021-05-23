@@ -65,3 +65,13 @@ class GraphicsWrapper(val graphics: Graphics) : NGraphic {
 interface Drawable {
     fun onDraw(g: NGraphic)
 }
+
+abstract class GraphicsDrawable:Drawable{
+    override fun onDraw(g: NGraphic) {
+        val gg = GraphicsWrapper.graphics(g)
+        if (gg != null) {
+            onDraw(gg)
+        }
+    }
+    abstract fun onDraw(gg:Graphics)
+}
