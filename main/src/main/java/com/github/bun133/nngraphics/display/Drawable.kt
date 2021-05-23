@@ -12,13 +12,28 @@ interface NGraphic {
     fun getColor(): Color
 
     fun line(from: Pos, to: Pos)
-    fun rect(left_up: Pos, right_down: Pos, isFill: Boolean = true){
-        rect(Rect(left_up,right_down),isFill)
+    fun rect(left_up: Pos, right_down: Pos, isFill: Boolean = true) {
+        rect(Rect(left_up, right_down), isFill)
     }
-    fun rect(rect:Rect, isFill: Boolean = true)
+
+    fun rect(rect: Rect, isFill: Boolean = true)
 }
 
 class GraphicsWrapper(val graphics: Graphics) : NGraphic {
+    companion object {
+        fun convert(g: NGraphic): GraphicsWrapper? {
+            return if (g !is GraphicsWrapper) {
+                null
+            } else {
+                g
+            }
+        }
+
+        fun graphics(g:NGraphic):Graphics? {
+            return convert(g)?.graphics
+        }
+    }
+
     override fun setRGB(pos: Pos, rgb: Color) {
         setColor(rgb)
         line(pos, pos)
@@ -35,18 +50,18 @@ class GraphicsWrapper(val graphics: Graphics) : NGraphic {
     override fun getColor(): Color = graphics.color
 
     override fun line(from: Pos, to: Pos) {
-        graphics.drawLine(from.x,from.y,to.x,to.y)
+        graphics.drawLine(from.x, from.y, to.x, to.y)
     }
 
     override fun rect(rect: Rect, isFill: Boolean) {
-        if(isFill){
-            graphics.fillRect(rect.left_up.x,rect.left_up.x,rect.width(),rect.height())
-        }else{
-            graphics.drawRect(rect.left_up.x,rect.left_up.x,rect.width(),rect.height())
+        if (isFill) {
+            graphics.fillRect(rect.left_up.x, rect.left_up.x, rect.width(), rect.height())
+        } else {
+            graphics.drawRect(rect.left_up.x, rect.left_up.x, rect.width(), rect.height())
         }
     }
 }
 
 interface Drawable {
-    fun onDraw(g:NGraphic)
+    fun onDraw(g: NGraphic)
 }
