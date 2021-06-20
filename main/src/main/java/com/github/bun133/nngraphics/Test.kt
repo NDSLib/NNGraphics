@@ -17,12 +17,14 @@ fun main() {
         override fun setPos(pos: Pos) {}
     })*/
 
-    d.mouse.listeners.add(object: MouseBoundedListener<MouseEvent>{
-        override fun bound(): Rect = Rect(100,100,500,500)
+    d.mouse.listeners.add(object : MouseBoundedListener<MouseEvent> {
+        override fun bound(): Rect = Rect(100, 100, 500, 500)
         override fun type(): List<Mouse.Type>? = null
-        override fun on(p: Pos, t: Mouse.Type, event:MouseEvent) {
+        override fun on(p: Pos, t: Mouse.Type, event: MouseEvent) {
             println("[Mouse]Pos:${p.x},${p.y} Type:${t.name},e:$event")
         }
+
+        override var isIn: Boolean = false
     })
 
     while (true) {

@@ -64,6 +64,19 @@ abstract class Mouse<T> {
             return
         }
 
+        // RectでもEnter、Exitが欲しい。
+        listeners.forEach {
+            val b = it.bound().contain(p)
+            if (it.isIn != b) {
+                if (it.isIn) {
+                    it.on(p, Type.Exit, event)
+                } else {
+                    it.on(p, Type.Enter, event)
+                }
+            }
+            it.isIn = b
+        }
+
         listeners
             .filter { it.type() == null || it.type()!!.contains(t) }
             .filter { it.bound().contain(p) }
@@ -79,6 +92,9 @@ interface MouseBoundedListener<T> {
     fun bound(): Rect
     fun type(): List<Mouse.Type>?
     fun on(p: Pos, t: Mouse.Type, event: T)
+
+    // 範囲内にMouseがあるか
+    var isIn: Boolean
 }
 
 class SceneManager {
