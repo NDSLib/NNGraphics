@@ -1,5 +1,6 @@
 package com.github.bun133.nngraphics.display
 
+import java.awt.event.MouseEvent
 import kotlin.math.roundToLong
 
 
@@ -39,10 +40,11 @@ abstract class Display {
 
 abstract class Mouse<T> {
     enum class Type {
-        LeftClick, RightClick, OtherClick, Drag, Enter, Exit, Move
+        LeftClick, RightClick, WheelClick, OtherClick, Drag, Enter, Exit, Move, Release
     }
 
     abstract fun getNowPos(): Pos
+    abstract fun getPosFromT(t: T): Pos?
     fun getPosX(): Int {
         return getNowPos().x
     }
@@ -54,15 +56,29 @@ abstract class Mouse<T> {
     val register: TypedRegister<T, Type> = TypedRegister()
 
     fun invoke(event: T) {
-        val t = getType(event)
-        if (t == null) {
-            println("[NNGraphics][Warn]In Mouse,getType returns Null")
+        val t = getType(event) ?: return
+        register.execute(event, t)
+        val p = getPosFromT(event)
+        if (p == null) {
+            println("[NNGraphics][Warn]In Mouse,getPosFromT is Null")
             return
         }
-        register.execute(event, t)
+
+        listeners
+            .filter { it.type() == null || it.type()!!.contains(t) }
+            .filter { it.bound().contain(p) }
+            .forEach { it.on(p, t, event) }
     }
 
     abstract fun getType(event: T): Type?
+
+    var listeners = mutableListOf<MouseBoundedListener<T>>()
+}
+
+interface MouseBoundedListener<T> {
+    fun bound(): Rect
+    fun type(): List<Mouse.Type>?
+    fun on(p: Pos, t: Mouse.Type, event: T)
 }
 
 class SceneManager {
@@ -119,6 +135,7 @@ open class DrawManager(var fps: Double, open val display: Display, val skipMode:
 
     private fun calcTime() {
         if (draw()) {
+//            println("Delta:${System.nanoTime() - lastTime}")
             lastTime = System.nanoTime()
         } else {
             println("[NNGraphics]This Frame is Skipped since NGraphic is Null")
@@ -136,7 +153,7 @@ open class DrawManager(var fps: Double, open val display: Display, val skipMode:
         }
     }
 
-    private fun draw(): Boolean {
+    open fun draw(): Boolean {
         val d = display.getGraphics() ?: return false
         display.scene.getCurrentScene().layers.forEach { layer ->
             layer.drawables.forEach {
@@ -147,7 +164,7 @@ open class DrawManager(var fps: Double, open val display: Display, val skipMode:
     }
 
     private fun getFrameNs(): Long {
-        return (1000L * 1000L / fps).roundToLong()
+        return (1000L * 1000L * 1000L / fps).roundToLong()
     }
 }
 

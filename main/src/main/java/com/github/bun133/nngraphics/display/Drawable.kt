@@ -64,6 +64,9 @@ class GraphicsWrapper(val graphics: Graphics) : NGraphic {
 
 interface Drawable {
     fun onDraw(g: NGraphic)
+    // 特に何かを縛りはしないけど左上の座標
+    fun pos():Pos
+    fun setPos(pos:Pos)
 }
 
 abstract class GraphicsDrawable:Drawable{

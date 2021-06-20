@@ -1,5 +1,6 @@
 package com.github.bun133.nngraphics.display
 
+import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Toolkit
 import java.awt.event.*
@@ -10,13 +11,15 @@ class JFrameDisplay(
     name: String = "NNGraphics",
     bound: Rect,
     closeOperation: Int = JFrame.EXIT_ON_CLOSE,
-    bufferSize: Int = 3
+    bufferSize: Int = 3,
+    isUndecorated: Boolean = false
 ) : Display() {
     override val mouse: JFrameMouseWrapper = JFrameMouseWrapper(this)
     override val draw: JFrameDrawManger = JFrameDrawManger(60.0, this)
     override val windowListener: JFrameWindowListener = JFrameWindowListener(this)
     lateinit var jframe: JFrame
     lateinit var buffer: BufferStrategy
+    var backGroundColor = Color.WHITE
 
     init {
         eventHandler.register {
@@ -25,6 +28,7 @@ class JFrameDisplay(
                     jframe = JFrame(name)
                     jframe.setBounds(bound.left_up.x, bound.left_up.y, bound.width(), bound.height())
                     jframe.defaultCloseOperation = closeOperation
+                    jframe.isUndecorated = isUndecorated
                     jframe.isVisible = true
                     jframe.createBufferStrategy(bufferSize)
                     buffer = jframe.bufferStrategy
@@ -48,6 +52,8 @@ class JFrameDisplay(
             GraphicsWrapper(g)
         }
     }
+
+    fun rect() = Rect(jframe.bounds)
 }
 
 class JFrameMouseWrapper(val jframe: JFrameDisplay) : Mouse<MouseEvent>(), MouseListener, MouseMotionListener {
@@ -67,11 +73,19 @@ class JFrameMouseWrapper(val jframe: JFrameDisplay) : Mouse<MouseEvent>(), Mouse
     override fun getNowPos(): Pos = pos
     override fun getType(event: MouseEvent): Type? {
         if (event.button != 0) {
+            if (event.id == MouseEvent.MOUSE_RELEASED) return Type.Release
+            if (event.modifiersEx == 0) {
+                // Release後の謎発火
+                return null
+            }
             return when (event.button) {
                 MouseEvent.BUTTON1 -> {
                     Type.LeftClick
                 }
                 MouseEvent.BUTTON2 -> {
+                    Type.WheelClick
+                }
+                MouseEvent.BUTTON3 -> {
                     Type.RightClick
                 }
                 else -> {
@@ -92,6 +106,9 @@ class JFrameMouseWrapper(val jframe: JFrameDisplay) : Mouse<MouseEvent>(), Mouse
             }
             MouseEvent.MOUSE_ENTERED -> {
                 return Type.Enter
+            }
+            MouseEvent.MOUSE_RELEASED -> {
+                return Type.Release
             }
         }
         return null
@@ -136,6 +153,10 @@ class JFrameMouseWrapper(val jframe: JFrameDisplay) : Mouse<MouseEvent>(), Mouse
     override fun mouseMoved(e: MouseEvent) {
         updatePos(e)
         invoke(e)
+    }
+
+    override fun getPosFromT(t: MouseEvent): Pos {
+        return Pos(t.point.x, t.point.y)
     }
 }
 
@@ -183,10 +204,19 @@ class JFrameWindowListener(val display: JFrameDisplay) : WinListener<WindowEvent
 
 }
 
-class JFrameDrawManger(fps: Double, override val display: JFrameDisplay): DrawManager(fps, display) {
-    override fun update(){
-        super.update()
-        Toolkit.getDefaultToolkit().sync()
-        if (!display.buffer.contentsLost()) display.buffer.show()
+class JFrameDrawManger(fps: Double, override val display: JFrameDisplay) : DrawManager(fps, display) {
+    override fun draw(): Boolean {
+        val d = display.getGraphics()
+        if ((d != null)) {
+            d.setColor(display.backGroundColor)
+            val r = display.rect()
+            d.rect(Rect(0, 0, r.width(), r.height()), true)
+        }
+        val b = super.draw()
+        if (b) {
+            Toolkit.getDefaultToolkit().sync()
+            if (!display.buffer.contentsLost()) display.buffer.show()
+        }
+        return b
     }
 }
