@@ -1,6 +1,5 @@
 package com.github.bun133.nngraphics.display
 
-import java.awt.event.MouseEvent
 import kotlin.math.roundToLong
 
 
@@ -40,7 +39,24 @@ abstract class Display {
 
 abstract class Mouse<T> {
     enum class Type {
-        LeftClick, RightClick, WheelClick, OtherClick, Drag, Enter, Exit, Move, Release
+        // 左クリック
+        LeftClick,
+        // 右クリック
+        RightClick,
+        // ホイールクリック
+        WheelClick,
+        // その他クリック
+        OtherClick,
+        // ドラッグ
+        Drag,
+        // マウスが進入
+        Enter,
+        // マウスが出で行った
+        Exit,
+        // マウス移動
+        Move,
+        // マウスリリース
+        Release
     }
 
     abstract fun getNowPos(): Pos
@@ -69,18 +85,25 @@ abstract class Mouse<T> {
             val b = it.bound().contain(p)
             if (it.isIn != b) {
                 if (it.isIn) {
-                    it.on(p, Type.Exit, event)
+                    it.onInBound(p, Type.Exit, event)
                 } else {
-                    it.on(p, Type.Enter, event)
+                    it.onInBound(p, Type.Enter, event)
                 }
             }
             it.isIn = b
         }
 
+        // InBound
         listeners
             .filter { it.type() == null || it.type()!!.contains(t) }
             .filter { it.bound().contain(p) }
-            .forEach { it.on(p, t, event) }
+            .forEach { it.onInBound(p, t, event) }
+
+        // OutBound
+        listeners
+            .filter { it.type() == null || it.type()!!.contains(t) }
+            .filter { !it.bound().contain(p) }
+            .forEach { it.onOutBound(p, t, event) }
     }
 
     abstract fun getType(event: T): Type?
@@ -91,7 +114,8 @@ abstract class Mouse<T> {
 interface MouseBoundedListener<T> {
     fun bound(): Rect
     fun type(): List<Mouse.Type>?
-    fun on(p: Pos, t: Mouse.Type, event: T)
+    fun onInBound(p: Pos, t: Mouse.Type, event: T)
+    fun onOutBound(p: Pos, t: Mouse.Type, event: T)
 
     // 範囲内にMouseがあるか
     var isIn: Boolean
