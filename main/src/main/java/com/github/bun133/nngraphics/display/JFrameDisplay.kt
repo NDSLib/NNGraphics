@@ -213,8 +213,7 @@ class JFrameDrawManger(fps: Double, override val display: JFrameDisplay) : DrawM
         val d = display.getGraphics()
         if ((d != null)) {
             d.setColor(display.backGroundColor)
-            val r = display.rect()
-            d.rect(Rect(0, 0, r.width(), r.height()), true)
+            d.rect(display.rect(), true)
         }
         val b = super.draw()
         if (b) {
