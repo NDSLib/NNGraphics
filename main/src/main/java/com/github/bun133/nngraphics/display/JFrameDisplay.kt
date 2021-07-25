@@ -53,7 +53,11 @@ class JFrameDisplay(
         }
     }
 
-    fun rect() = Rect(jframe.bounds)
+    fun rectOnDisplay() = Rect(jframe.bounds)
+    fun rect(): Rect {
+        val r = rectOnDisplay()
+        return Rect(0, 0, r.width(), r.height())
+    }
 }
 
 class JFrameMouseWrapper(val jframe: JFrameDisplay) : Mouse<MouseEvent>(), MouseListener, MouseMotionListener {
